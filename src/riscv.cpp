@@ -4,11 +4,8 @@
 
 #include "../h/riscv.hpp"
 #include "../h/TCB.hpp"
+#include "../lib/hw.h"
 #include "../lib/console.h"
-#include "../h/print.hpp"
-#include "../h/Semaphore.hpp"
-#include "../h/console.hpp"
-#include "../h/syscall_c.hpp"
 
 /*
  * u jedan asm fajl sam stavio sve trap rutine koje cuvaju kontekst i pozivaju odgovarajuci handler
@@ -34,16 +31,15 @@ void Riscv::handleSupervisorExternalInterrupt()
 
 void Riscv::handleExceptions()
 {
-
-}
-
-    // interrupt: no; cause code: environment call from U-mode(8) or S-mode(9)
-    /*uint64 volatile sepc = r_sepc() + 4;
+    uint64 volatile sepc = r_sepc() + 4;
     uint64 volatile sstatus = r_sstatus();
-    TCB::timeSliceCounter = 0;
-    TCB::dispatch();
+
+    Thread::timeSliceCounter = 0;
+    Thread::dispatch();
+
+
     w_sstatus(sstatus);
-    w_sepc(sepc);*/
+    w_sepc(sepc);
 
 }
 

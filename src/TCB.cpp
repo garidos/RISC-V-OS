@@ -2,8 +2,22 @@
 // Created by os on 6/17/23.
 //
 
-#include "../h/TCB.h"
+#include "../h/TCB.hpp"
 #include "../h/riscv.hpp"
+#include "../lib/console.h"
+
+Thread* Thread::schedulerHead = nullptr;
+Thread* Thread::schedulerTail = nullptr;
+Thread* Thread::running = nullptr;
+uint64 Thread::timeSliceCounter = 0;
+
+Thread* Thread::create(Body body, void *arg, uint64 *stack) {
+    return new Thread(body, arg, stack, DEFAULT_TIME_SLICE, Thread::threadWrapper);
+}
+
+Thread* Thread::createAndSwitchToUser(Body body, void *arg, uint64 *stack) {
+    return new Thread(body, arg, stack, DEFAULT_TIME_SLICE, Thread::userMainWrapper);
+}
 
 void Thread::threadWrapper() {
     Riscv::returnFromSMode();
@@ -12,12 +26,28 @@ void Thread::threadWrapper() {
 
     //nit je zavrsena
 
-    Thread::running->finished = true;
-    //ne moze samo da se pozove dispatch koji bi vratio nit u prekidnu rutinu gjde je izgubila procesor, bez da prethodno predje u sistemski rezim
+    Thread::running->setFinished(true);
+    //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
+    Thread::dispatch();
+}
+
+void Thread::userMainWrapper() {
+    //postavlja SPP bit u sstatus na 0, kako bi se pri povratku iz prekidne rutine preslo u koriscnicki rezim
+    Riscv::mc_sstatus(Riscv::SSTATUS_SPP);
+    Riscv::returnFromSMode();
+    //poziv stvarnog tijela niti
+    Thread::running->body(Thread::running->argument);
+    //userMain();
+
+    //nit je zavrsena
+    Thread::running->setFinished(true);
+    //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
     Thread::dispatch();
 }
 
 void Thread::dispatch() {
+
+    if ( Thread::schedulerHead == nullptr) return;
 
     Thread* old = Thread::running;
 
@@ -36,6 +66,7 @@ Thread* Thread::schedulerGet() {
     return temp;
 }
 
+//stavlja nit u scheduler
 void Thread::schedulerPut(Thread *thread) {
     thread->next = nullptr; //nije potrebno jer se postavlja na nulu u schedulerGet, ali za svaki slucaj
     if ( Thread::schedulerHead == nullptr) Thread::schedulerHead = Thread::schedulerTail = thread;
@@ -43,4 +74,14 @@ void Thread::schedulerPut(Thread *thread) {
         Thread::schedulerTail->next = thread;
         Thread::schedulerTail = thread;
     }
+}
+
+//vraca kontekst - korisit se pri cuvanju/restauraciji konteksta kod prekida
+uint64* Thread::getContext() {
+    return Thread::running->context;
+}
+
+void Thread::yield()
+{
+    __asm__ volatile ("ecall");
 }
