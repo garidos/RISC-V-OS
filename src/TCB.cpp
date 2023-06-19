@@ -28,7 +28,8 @@ void Thread::threadWrapper() {
 
     Thread::running->setFinished(true);
     //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
-    Thread::dispatch();
+    //Thread::timeSliceCounter = 0;
+    Thread::yield();
 }
 
 void Thread::userMainWrapper() {
@@ -42,7 +43,7 @@ void Thread::userMainWrapper() {
     //nit je zavrsena
     Thread::running->setFinished(true);
     //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
-    Thread::dispatch();
+    Thread::yield();
 }
 
 void Thread::dispatch() {

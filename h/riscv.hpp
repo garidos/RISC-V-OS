@@ -2,6 +2,8 @@
 // Created by marko on 20.4.22..
 //
 
+//preuzeto sa ps vjezbi
+
 #ifndef OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_RISCV_HPP
 #define OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_RISCV_HPP
 

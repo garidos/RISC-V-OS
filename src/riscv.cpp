@@ -18,7 +18,22 @@
 
 void Riscv::handleSupervisorSoftwareInterrupt()
 {
+    mc_sip(SIP_SSIP);
 
+    if ( Thread::running == nullptr) return;
+    Thread::timeSliceCounter++;
+    if ( Thread::timeSliceCounter >= Thread::running->getTimeSlice()  ) {
+
+        uint64 volatile sepc = r_sepc();
+        uint64 volatile sstatus = r_sstatus();
+
+        Thread::timeSliceCounter = 0;
+        Thread::dispatch();
+
+        w_sstatus(sstatus);
+        w_sepc(sepc);
+
+    }
 
 
 }
@@ -31,16 +46,23 @@ void Riscv::handleSupervisorExternalInterrupt()
 
 void Riscv::handleExceptions()
 {
-    uint64 volatile sepc = r_sepc() + 4;
-    uint64 volatile sstatus = r_sstatus();
+   // uint64 volatile scause = r_scause();
 
-    Thread::timeSliceCounter = 0;
-    Thread::dispatch();
+    //if ( scause == 0x0000000000000008UL || scause == 0x0000000000000009UL) {
+
+        uint64 volatile sepc = r_sepc() + 4;
+        uint64 volatile sstatus = r_sstatus();
+
+        Thread::timeSliceCounter = 0;
+        Thread::dispatch();
 
 
-    w_sstatus(sstatus);
-    w_sepc(sepc);
+        w_sstatus(sstatus);
+        w_sepc(sepc);
+  //  }
+    //else {
 
+    //}
 }
 
 
