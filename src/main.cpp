@@ -8,11 +8,12 @@
 #include "../h/print.hpp"
 #include "../h/syscall_c.hpp"
 
+
 void workerBodyA(void* arg)
 {
-    //sem_t sem = (sem_t)arg;
+    sem_t sem = (sem_t)arg;
 
-    //sem_wait(sem);
+    sem_wait(sem);
 
     for (uint64 i = 0; i < 10; i++)
     {
@@ -28,15 +29,14 @@ void workerBodyA(void* arg)
 //            TCB::yield();
         }
     }
-
-    //sem_signal(sem);
+    sem_signal(sem);
 }
 
 void workerBodyB(void* arg)
 {
-    //sem_t sem = (sem_t)arg;
+    sem_t sem = (sem_t)arg;
 
-    //sem_wait(sem);
+    sem_wait(sem);
 
     for ( uint64 i = 0; i < 16; i++)
     {
@@ -52,7 +52,7 @@ void workerBodyB(void* arg)
 //            TCB::yield();
         }
     }
-    //sem_signal(sem);
+    sem_signal(sem);
 }
 
 static uint64 fibonacci(uint64 n)
@@ -62,12 +62,12 @@ static uint64 fibonacci(uint64 n)
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
+
 void workerBodyC(void* arg)
 {
-    //sem_t sem = (sem_t)arg;
+    sem_t sem = (sem_t)arg;
 
-    //sem_wait(sem);
-
+    sem_wait(sem);
     uint8 i = 0;
     for (; i < 3; i++)
     {
@@ -98,15 +98,15 @@ void workerBodyC(void* arg)
         printInteger(i);
         printString("\n");
     }
-    //sem_signal(sem);
+    sem_signal(sem);
 //    TCB::yield();
 }
 
 void workerBodyD(void* arg)
 {
-    //sem_t sem = (sem_t)arg;
+    sem_t sem = (sem_t)arg;
 
-    //sem_wait(sem);
+    sem_wait(sem);
 
     uint8 i = 10;
     for (; i < 13; i++)
@@ -131,7 +131,8 @@ void workerBodyD(void* arg)
         printInteger(i);
         printString("\n");
     }
-    //sem_signal(sem);
+
+    sem_signal(sem);
 //    TCB::yield();
 }
 
@@ -154,7 +155,7 @@ int main() {
     thread_create(&idle, TCB::idleThreadBody, nullptr);
 
     sem_t sem;
-    sem_open(&sem, 1);
+    sem_open(&sem, 4);
 
     thread_create(&threads[1], &workerBodyA, sem);
     printString("ThreadA created\n");
@@ -189,6 +190,7 @@ int main() {
     {
         delete thread;
     }
+
     printString("Finished\n");
 
     return 0;

@@ -110,6 +110,7 @@ void TCB::emptyWaiting() {
     waitingHead = waitingTail = nullptr;
 }
 
+
 //vraca kontekst - korisit se pri cuvanju/restauraciji konteksta kod prekida
 uint64* TCB::getContext() {
     return TCB::running->context;

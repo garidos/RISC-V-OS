@@ -32,7 +32,6 @@ void thread_join (
         thread_t handle
 );
 
-
 typedef SCB _sem;
 typedef _sem* sem_t;
 
