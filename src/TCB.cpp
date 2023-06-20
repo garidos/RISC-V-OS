@@ -119,3 +119,10 @@ void TCB::yield()
 {
     __asm__ volatile ("ecall");
 }
+
+void TCB::idleThreadBody(void*) {
+    while(true) {
+        Riscv::load_a0((uint64)Riscv::syscallCodes::thread_dispatch);
+        __asm__ volatile("ecall;");
+    };
+}

@@ -7,6 +7,7 @@
 
 #include "../lib/hw.h"
 #include "../h/TCB.hpp"
+#include "../h/SCB.hpp"
 
 void* mem_alloc (size_t size);
 
@@ -31,8 +32,8 @@ void thread_join (
         thread_t handle
 );
 
-/*
-typedef Semaphore _sem;
+
+typedef SCB _sem;
 typedef _sem* sem_t;
 
 int sem_open (
@@ -46,7 +47,7 @@ int sem_wait (sem_t id);
 
 int sem_signal (sem_t id);
 
-
+/*
 typedef unsigned long time_t;
 
 int time_sleep (time_t);

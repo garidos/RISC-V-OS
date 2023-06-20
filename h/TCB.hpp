@@ -16,6 +16,7 @@ class TCB {
 private:
 
     friend class Riscv;
+    friend class SCB;
 
     Body body;
     void *argument;
@@ -151,7 +152,7 @@ public:
 
     static TCB* createAndSwitchToUser(Body body, void* arg, uint64* stack);
 
-
+    static void idleThreadBody(void*);
 };
 
 

@@ -4,6 +4,7 @@
 
 #include "../h/riscv.hpp"
 #include "../h/TCB.hpp"
+#include "../h/SCB.hpp"
 #include "../lib/hw.h"
 #include "../lib/console.h"
 
@@ -108,12 +109,65 @@ void Riscv::handleExceptions()
                  * iz nekog razloga se promjene konteksta unutar prekida pravilno izvrsavaju samo ako se eksplicitno pozove dispatch koji ce to raditi
                  * u suprotnom se poremeti s0 ( frame pointer ) i ne izvrsava se pravilno
                  * ovo je i logicno, ali mi nije jasno zasto se pravilno izvrsava kada se poziva dispatch...
+                 * vjerovatno se pri povratku iz dispatch frame pointer vraca na osnovu sp ( koji je ispravan )
                  */
                /* TCB *old = TCB::running;
                 TCB::running = TCB::schedulerGet();
 
                 TCB::contextSwitch(old->context, TCB::running->context);*/
             }
+
+            break;
+        }
+
+        case syscallCodes::sem_open: {
+
+            SCB** volatile handle = (SCB**)TCB::running->context[TCB::registerOffs::a1Offs];
+            unsigned volatile init = (unsigned)TCB::running->context[TCB::registerOffs::a2Offs];
+
+            *handle = SCB::create((int)init);
+
+            int res = 0;
+            if ( *handle == nullptr) res = -2;
+
+            load_a0((uint64) res);
+
+            break;
+        }
+
+        case syscallCodes::sem_close: {
+
+            SCB* volatile handle = (SCB*)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            handle->release();
+
+            load_a0((uint64)0);
+
+            break;
+        }
+
+        case syscallCodes::sem_wait: {
+
+            SCB* volatile id = (SCB*)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            id->wait();
+
+            int res = 0;
+            //ako je semafor dealociran dok je nit bila blokirana na njemu
+            if ( !id->active() ) res = -2;
+
+            load_a0((uint64)res);
+
+            break;
+        }
+
+        case syscallCodes::sem_signal: {
+
+            SCB* volatile id = (SCB*)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            id->signal();
+
+            load_a0((uint64)0);
 
             break;
         }

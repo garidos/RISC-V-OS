@@ -51,6 +51,59 @@ void thread_join (thread_t handle) {
     Riscv::load_a0((uint64)Riscv::syscallCodes::thread_join);
 
     __asm__ volatile("ecall;");
+}
 
-    if ( handle == nullptr) Riscv::load_a1((uint64) handle);
+int sem_open (sem_t* handle, unsigned init) {
+    if ( handle == nullptr) return -1;
+
+    Riscv::load_a2((uint64)init);
+    Riscv::load_a1((uint64)handle);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::sem_open);
+
+    int res;
+    __asm__ volatile("ecall;");
+    __asm__ volatile("mv %0, a0" : "=r" (res));
+
+    return res;
+}
+
+int sem_close(sem_t handle) {
+    if ( handle == nullptr || !handle->active()) return -1;
+
+    Riscv::load_a1((uint64)handle);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::sem_close);
+
+    int res;
+    __asm__ volatile("ecall;");
+    __asm__ volatile("mv %0, a0" : "=r" (res));
+
+    return res;
+}
+
+int sem_wait (sem_t id) {
+
+    if ( id == nullptr || !id->active()) return -1;
+
+    Riscv::load_a1((uint64)id);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::sem_wait);
+
+    int res;
+    __asm__ volatile("ecall;");
+    __asm__ volatile("mv %0, a0" : "=r" (res));
+
+    return res;
+}
+
+int sem_signal (sem_t id) {
+
+    if ( id == nullptr || !id->active()) return -1;
+
+    Riscv::load_a1((uint64)id);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::sem_signal);
+
+    int res;
+    __asm__ volatile("ecall;");
+    __asm__ volatile("mv %0, a0" : "=r" (res));
+
+    return res;
 }
