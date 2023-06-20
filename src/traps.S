@@ -2,7 +2,7 @@
 .extern _ZN5Riscv33handleSupervisorSoftwareInterruptEv
 .extern _ZN5Riscv33handleSupervisorExternalInterruptEv
 .extern _ZN5Riscv16handleExceptionsEv
-.extern _ZN6Thread10getContextEv
+.extern _ZN3TCB10getContextEv
 
 .global _ZN5Riscv31trapSupervisorSoftwareInterruptEv
 .type _ZN5Riscv31trapSupervisorSoftwareInterruptEv, @function
@@ -13,7 +13,7 @@ _ZN5Riscv31trapSupervisorSoftwareInterruptEv:
     sd a0, 0 * 8(sp)
     sd ra, 1 * 8(sp)
 
-    call _ZN6Thread10getContextEv
+    call _ZN3TCB10getContextEv
 
     //sada je u a0 pokazivac na context
 
@@ -28,7 +28,7 @@ _ZN5Riscv31trapSupervisorSoftwareInterruptEv:
 
     call _ZN5Riscv33handleSupervisorSoftwareInterruptEv
 
-    call _ZN6Thread10getContextEv
+    call _ZN3TCB10getContextEv
 
     .irp index, 1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 //restauriraju se svi registri osim a0 u kom je pokazivac na context
     ld x\index, \index * 8(a0)
@@ -46,7 +46,7 @@ _ZN5Riscv31trapSupervisorExternalInterruptEv:
     sd a0, 0 * 8(sp)
     sd ra, 1 * 8(sp)
 
-    call _ZN6Thread10getContextEv
+    call _ZN3TCB10getContextEv
 
     //sada je u a0 pokazivac na context
 
@@ -61,7 +61,7 @@ _ZN5Riscv31trapSupervisorExternalInterruptEv:
 
     call _ZN5Riscv33handleSupervisorExternalInterruptEv
 
-    call _ZN6Thread10getContextEv
+    call _ZN3TCB10getContextEv
 
     .irp index, 1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 //restauriraju se svi registri osim a0 u kom je pokazivac na context
     ld x\index, \index * 8(a0)
@@ -79,7 +79,7 @@ _ZN5Riscv14trapExceptionsEv:
     sd a0, 0 * 8(sp)
     sd ra, 1 * 8(sp)
 
-    call _ZN6Thread10getContextEv
+    call _ZN3TCB10getContextEv
 
     //sada je u a0 pokazivac na context
 
@@ -94,7 +94,7 @@ _ZN5Riscv14trapExceptionsEv:
 
     call _ZN5Riscv16handleExceptionsEv
 
-    call _ZN6Thread10getContextEv
+    call _ZN3TCB10getContextEv
 
     .irp index, 1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 //restauriraju se svi registri osim a0 u kom je pokazivac na context
     ld x\index, \index * 8(a0)

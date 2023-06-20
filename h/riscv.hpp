@@ -13,6 +13,32 @@ class Riscv
 {
 public:
 
+    //kodovi sistemskih poziva iz C API-ja koji se koriste pri pozivu sistemskih poziva iz ABI-ja
+    enum syscallCodes {
+        mem_alloc = 0x01, mem_free = 0x02, thread_create = 0x11, thread_exit = 0x12, thread_dispatch = 0x13, thread_join = 0x14,
+        sem_open = 0x21, sem_close = 0x22, sem_wait = 0x23, sem_signal = 0x24, time_sleep = 0x31, getc = 0x41, putc = 0x42
+    };
+
+    static void load_a0(uint64 value) {
+        __asm__ volatile("mv a0, %0" : : "r" (value));
+    }
+
+    static void load_a1(uint64 value) {
+        __asm__ volatile("mv a1, %0" : : "r" (value));
+    }
+
+    static void load_a2(uint64 value) {
+        __asm__ volatile("mv a2, %0" : : "r" (value));
+    }
+
+    static void load_a3(uint64 value) {
+        __asm__ volatile("mv a3, %0" : : "r" (value));
+    }
+
+    static void load_a4(uint64 value) {
+        __asm__ volatile("mv a4, %0" : : "r" (value));
+    }
+
 
     // vraca se iz sistemskog rezima cime popuje spp i spie bite sstatus registra, pa se u njoj mora postaviti i sepc
     static void returnFromSMode();

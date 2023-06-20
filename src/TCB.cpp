@@ -6,83 +6,116 @@
 #include "../h/riscv.hpp"
 #include "../lib/console.h"
 
-Thread* Thread::schedulerHead = nullptr;
-Thread* Thread::schedulerTail = nullptr;
-Thread* Thread::running = nullptr;
-uint64 Thread::timeSliceCounter = 0;
+TCB* TCB::schedulerHead = nullptr;
+TCB* TCB::schedulerTail = nullptr;
+TCB* TCB::running = nullptr;
+uint64 TCB::timeSliceCounter = 0;
 
-Thread* Thread::create(Body body, void *arg, uint64 *stack) {
-    return new Thread(body, arg, stack, DEFAULT_TIME_SLICE, Thread::threadWrapper);
+TCB* TCB::create(Body body, void *arg, uint64 *stack) {
+    return new TCB(body, arg, stack, DEFAULT_TIME_SLICE, TCB::threadWrapper);
 }
 
-Thread* Thread::createAndSwitchToUser(Body body, void *arg, uint64 *stack) {
-    return new Thread(body, arg, stack, DEFAULT_TIME_SLICE, Thread::userMainWrapper);
+TCB* TCB::createAndSwitchToUser(Body body, void *arg, uint64 *stack) {
+    return new TCB(body, arg, stack, DEFAULT_TIME_SLICE, TCB::userMainWrapper);
 }
 
-void Thread::threadWrapper() {
+void TCB::threadWrapper() {
     Riscv::returnFromSMode();
     //poziv stvarnog tijela niti
-    Thread::running->body(Thread::running->argument);
+    TCB::running->body(TCB::running->argument);
 
     //nit je zavrsena
 
-    Thread::running->setFinished(true);
+    TCB::running->setFinished(true);
+    //oslobadjaju se sve niti koje su cekale na ovu
+    TCB::running->emptyWaiting();
     //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
-    //Thread::timeSliceCounter = 0;
-    Thread::yield();
+    //TCB::timeSliceCounter = 0;
+    //ovo je u stvari thread_dispatch(), ali da ne bi ovde pozivao c api funkcije
+    Riscv::load_a0((uint64)Riscv::syscallCodes::thread_dispatch);
+    __asm__ volatile("ecall;");
+
 }
 
-void Thread::userMainWrapper() {
+void TCB::userMainWrapper() {
     //postavlja SPP bit u sstatus na 0, kako bi se pri povratku iz prekidne rutine preslo u koriscnicki rezim
     Riscv::mc_sstatus(Riscv::SSTATUS_SPP);
     Riscv::returnFromSMode();
     //poziv stvarnog tijela niti
-    Thread::running->body(Thread::running->argument);
+    TCB::running->body(TCB::running->argument);
     //userMain();
 
     //nit je zavrsena
-    Thread::running->setFinished(true);
+    TCB::running->setFinished(true);
     //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
-    Thread::yield();
+    TCB::running->emptyWaiting();
+    //ovo je u stvari thread_dispatch(), ali da ne bi ovde pozivao c api funkcije
+    Riscv::load_a0((uint64)Riscv::syscallCodes::thread_dispatch);
+    __asm__ volatile("ecall;");
+
 }
 
-void Thread::dispatch() {
+void TCB::dispatch(bool flag) {
 
-    if ( Thread::schedulerHead == nullptr) return;
+    if (TCB::schedulerHead == nullptr) return;
 
-    Thread* old = Thread::running;
+    TCB* old = TCB::running;
 
-    if ( !old->isFinished() ) Thread::schedulerPut(old);
-    Thread::running = Thread::schedulerGet();
 
-    contextSwitch(old->context, Thread::running->context);
+    if ( !old->isFinished() && !flag) TCB::schedulerPut(old);
+    TCB::running = TCB::schedulerGet();
+
+    contextSwitch(old->context, TCB::running->context);
 }
 
 //vraca narednu nit u scheduleru
-Thread* Thread::schedulerGet() {
-    Thread* temp = Thread::schedulerHead;
-    Thread::schedulerHead = temp->next;
+TCB* TCB::schedulerGet() {
+    TCB* temp = TCB::schedulerHead;
+    TCB::schedulerHead = temp->next;
     temp->next = nullptr;
-    if ( Thread::schedulerHead == nullptr) Thread::schedulerTail = nullptr;
+    if (TCB::schedulerHead == nullptr) TCB::schedulerTail = nullptr;
     return temp;
 }
 
 //stavlja nit u scheduler
-void Thread::schedulerPut(Thread *thread) {
+void TCB::schedulerPut(TCB *thread) {
     thread->next = nullptr; //nije potrebno jer se postavlja na nulu u schedulerGet, ali za svaki slucaj
-    if ( Thread::schedulerHead == nullptr) Thread::schedulerHead = Thread::schedulerTail = thread;
+    if (TCB::schedulerHead == nullptr) TCB::schedulerHead = TCB::schedulerTail = thread;
     else {
-        Thread::schedulerTail->next = thread;
-        Thread::schedulerTail = thread;
+        TCB::schedulerTail->next = thread;
+        TCB::schedulerTail = thread;
     }
 }
 
-//vraca kontekst - korisit se pri cuvanju/restauraciji konteksta kod prekida
-uint64* Thread::getContext() {
-    return Thread::running->context;
+//stavlja nit u red niti koje cekaju da se nit nad kojom se poziva zavrsi ( koje su pozvale join nad tom niti )
+void TCB::putWaiting(TCB *thread) {
+    thread->next = nullptr;
+    if ( waitingHead == nullptr) waitingHead = waitingTail = thread;
+    else {
+        waitingTail->next = thread;
+        waitingTail = thread;
+    }
 }
 
-void Thread::yield()
+//funkcija koja se poziva pri zavrsetku date niti da bi sve niti koje su cekale na njen zavrsetak
+void TCB::emptyWaiting() {
+    TCB* temp = waitingHead;
+
+    while(temp != nullptr) {
+        TCB* nextTemp = temp->next; //jer ce schedulerPut da psotavi next na nullptr
+        TCB::schedulerPut(temp);  // u jednom trenutku se moze cekati samo na jednu nit pa mi ne treba nista dodatno, samo stavljam u Scheduler
+        temp = nextTemp;
+    }
+
+    waitingHead = waitingTail = nullptr;
+}
+
+//vraca kontekst - korisit se pri cuvanju/restauraciji konteksta kod prekida
+uint64* TCB::getContext() {
+    return TCB::running->context;
+}
+
+void TCB::yield()
 {
     __asm__ volatile ("ecall");
 }

@@ -1,6 +1,6 @@
-.global _ZN6Thread13contextSwitchEPmS0_
-.type _ZN6Thread13contextSwitchEPmS0_, @function
-_ZN6Thread13contextSwitchEPmS0_:
+.global _ZN3TCB13contextSwitchEPmS0_
+.type _ZN3TCB13contextSwitchEPmS0_, @function
+_ZN3TCB13contextSwitchEPmS0_:
     sd ra, 0 * 8(a0)
     sd sp, 32 * 8(a0)
 

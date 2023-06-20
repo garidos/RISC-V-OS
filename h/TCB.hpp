@@ -2,7 +2,7 @@
 // Created by os on 6/17/23.
 //
 
-// dio Thread klase uzet sa vjezbi
+// dio TCB klase uzet sa vjezbi
 
 #ifndef PROJEKAT_TCB_HPP
 #define PROJEKAT_TCB_HPP
@@ -11,7 +11,7 @@
 
 using Body = void (*)(void*);
 
-class Thread {
+class TCB {
 
 private:
 
@@ -26,6 +26,11 @@ private:
 
     //kontekst se cuva unutar samog objekta niti
     uint64 *context;
+
+    enum registerOffs {
+        raOffs = 1, spOffs, gpOffs, tpOffs, t0Offs, t1Offs, t2Offs, s0Offs, s1Offs, a0Offs, a1Offs, a2Offs, a3Offs, a4Offs, a5Offs, a6Offs,
+        a7Offs, s2Offs, s3Offs, s4Offs, s5Offs, s6Offs, s7Offs, s8Offs, s9Offs, s10Offs, s11Offs, t3Offs, t4Offs, t5Offs, t6Offs
+    };
 
     /*
     * context:
@@ -64,9 +69,9 @@ private:
     * 32 * 8(context) : ssp //nije sistemski stek vec pokazivac na vrh steka u trenutku prekida
     */
 
-    Thread(Body threadBody, void* threadArgument, uint64* allocatedStack, uint64 timeSlice, void (*wrapper)()) :
+    TCB(Body threadBody, void* threadArgument, uint64* allocatedStack, uint64 timeSlice, void (*wrapper)()) :
             body(threadBody), argument(threadArgument), stack(allocatedStack), timeSlice(timeSlice),
-            finished(false), context(new uint64[33])
+            finished(false), context(new uint64[33]), waitingHead(nullptr), waitingTail(nullptr)
     {
         if ( stack != nullptr) context[32] = (uint64) &stack[DEFAULT_STACK_SIZE];
         else context[32] = 0;
@@ -98,10 +103,13 @@ private:
     static uint64 timeSliceCounter;
 
     //pokazivac na narednu nit u nizu - taj niz moze biti niz niti u Scheduleru, uspavanih niti itd.
-    Thread* next;
+    TCB* next;
 
-    static Thread* schedulerHead;
-    static Thread* schedulerTail;
+    static TCB* schedulerHead;
+    static TCB* schedulerTail;
+
+    TCB* waitingHead;
+    TCB* waitingTail;
 
 
     static void threadWrapper();
@@ -113,7 +121,7 @@ private:
 
 public:
 
-    ~Thread()
+    ~TCB()
     {
         delete[] stack;
         delete[] context;
@@ -125,20 +133,23 @@ public:
 
     uint64 getTimeSlice() const { return timeSlice; }
 
-    static Thread* schedulerGet();
-    static void schedulerPut(Thread * thread);
+    static TCB* schedulerGet();
+    static void schedulerPut(TCB * thread);
 
-    static Thread* running;
+    void putWaiting(TCB* thread);
+    void emptyWaiting();
 
-    static void dispatch();
+    static TCB* running;
+
+    static void dispatch(bool flag);
 
     static void yield();
 
     static uint64* getContext();
 
-    static Thread* create( Body body, void* arg, uint64* stack);
+    static TCB* create(Body body, void* arg, uint64* stack);
 
-    static Thread* createAndSwitchToUser(Body body, void* arg, uint64* stack);
+    static TCB* createAndSwitchToUser(Body body, void* arg, uint64* stack);
 
 
 };
