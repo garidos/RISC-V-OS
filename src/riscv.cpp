@@ -17,11 +17,23 @@
  * gdje cu sacuvati netaknut kontekst a onda pozvati handler
  */
 
+//prekidna rutina tajmera koji izaziva softverski prekid
 void Riscv::handleSupervisorSoftwareInterrupt()
 {
     mc_sip(SIP_SSIP);
 
     if (TCB::running == nullptr) return;
+
+    if ( TCB::sleepingHead != nullptr ) {
+        TCB::sleepingHead->timeLeft--;
+
+        while ( TCB::sleepingHead != nullptr && TCB::sleepingHead->timeLeft == 0) {
+            TCB* temp = TCB::sleepingHead;
+            TCB::sleepingHead = TCB::sleepingHead->next;
+            TCB::putScheduler(temp);
+        }
+    }
+
     TCB::timeSliceCounter++;
     if (TCB::timeSliceCounter >= TCB::running->getTimeSlice()  ) {
 
@@ -39,19 +51,21 @@ void Riscv::handleSupervisorSoftwareInterrupt()
 
 }
 
+//prekidna rutina kontrolera periferije koji izaziva spoljasnji prekid
 void Riscv::handleSupervisorExternalInterrupt()
 {
 
    console_handler();
 }
 
+//prekidna rutina za izuzetke - prije svega za ecall
 void Riscv::handleExceptions()
 {
     uint64 volatile sepc = r_sepc() + 4;
     uint64 volatile sstatus = r_sstatus();
     uint64 volatile sscause = r_scause();
 
-    if ( sscause == 0x1413);
+    if ( sscause == 14);
 
     uint64 volatile code = TCB::running->context[TCB::registerOffs::a0Offs];
 
@@ -112,7 +126,7 @@ void Riscv::handleExceptions()
                  * vjerovatno se pri povratku iz dispatch frame pointer vraca na osnovu sp ( koji je ispravan )
                  */
                /* TCB *old = TCB::running;
-                TCB::running = TCB::schedulerGet();
+                TCB::running = TCB::getScheduler();
 
                 TCB::contextSwitch(old->context, TCB::running->context);*/
             }
@@ -166,6 +180,20 @@ void Riscv::handleExceptions()
             SCB* volatile id = (SCB*)TCB::running->context[TCB::registerOffs::a1Offs];
 
             id->signal();
+
+            load_a0((uint64)0);
+
+            break;
+        }
+
+        case syscallCodes::time_sleep: {
+
+            time_t time = (time_t)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            TCB::running->timeLeft = time;
+            TCB::putSleeping(TCB::running);
+
+            TCB::dispatch(true);
 
             load_a0((uint64)0);
 

@@ -22,6 +22,7 @@ private:
     void *argument;
     uint64 *stack;
 
+    uint64 timeLeft;
     uint64 timeSlice;
     bool finished;
 
@@ -71,7 +72,7 @@ private:
     */
 
     TCB(Body threadBody, void* threadArgument, uint64* allocatedStack, uint64 timeSlice, void (*wrapper)()) :
-            body(threadBody), argument(threadArgument), stack(allocatedStack), timeSlice(timeSlice),
+            body(threadBody), argument(threadArgument), stack(allocatedStack), timeLeft(0), timeSlice(timeSlice),
             finished(false), context(new uint64[33]), waitingHead(nullptr), waitingTail(nullptr)
     {
         if ( stack != nullptr) context[32] = (uint64) &stack[DEFAULT_STACK_SIZE];
@@ -106,8 +107,12 @@ private:
     //pokazivac na narednu nit u nizu - taj niz moze biti niz niti u Scheduleru, uspavanih niti itd.
     TCB* next;
 
+    //pokazivaci na prvu i poslednju nit u nizu niti koje se nalaze u scheduleru
     static TCB* schedulerHead;
     static TCB* schedulerTail;
+
+    //pokazivac na prvu nit u nizu uspavanih niti
+    static TCB* sleepingHead;
 
     TCB* waitingHead;
     TCB* waitingTail;
@@ -134,11 +139,13 @@ public:
 
     uint64 getTimeSlice() const { return timeSlice; }
 
-    static TCB* schedulerGet();
-    static void schedulerPut(TCB * thread);
+    static TCB* getScheduler();
+    static void putScheduler(TCB * thread);
 
     void putWaiting(TCB* thread);
     void emptyWaiting();
+
+    static void putSleeping(TCB* thread);
 
     static TCB* running;
 

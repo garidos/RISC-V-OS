@@ -41,7 +41,7 @@ void SCB::unblock() {
     blockedHead = blockedHead->next;
     if ( blockedHead == nullptr) blockedTail = nullptr;
 
-    TCB::schedulerPut(temp);
+    TCB::putScheduler(temp);
 
 }
 
@@ -51,7 +51,7 @@ void SCB::release() {
 
     while ( temp != nullptr) {
         TCB* nextTemp = temp->next;
-        TCB::schedulerPut(temp);
+        TCB::putScheduler(temp);
         temp = nextTemp;
     }
 

@@ -107,3 +107,16 @@ int sem_signal (sem_t id) {
 
     return res;
 }
+
+int time_sleep (time_t time) {
+    if ( time == 0) return 0;
+
+    Riscv::load_a1((uint64)time);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::time_sleep);
+
+    int res;
+    __asm__ volatile("ecall;");
+    __asm__ volatile("mv %0, a0" : "=r" (res));
+
+    return res;
+}
