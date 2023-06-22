@@ -7,6 +7,7 @@
 #include "../h/SCB.hpp"
 #include "../lib/hw.h"
 #include "../lib/console.h"
+#include "../h/_console.hpp"
 
 /*
  * u jedan asm fajl sam stavio sve trap rutine koje cuvaju kontekst i pozivaju odgovarajuci handler
@@ -54,8 +55,28 @@ void Riscv::handleSupervisorSoftwareInterrupt()
 //prekidna rutina kontrolera periferije koji izaziva spoljasnji prekid
 void Riscv::handleSupervisorExternalInterrupt()
 {
+    mc_sip(SIP_SEIP);
+    int volatile code = plic_claim();
 
-   console_handler();
+    if ( code == 10) {
+
+        //if ( *(char*)CONSOLE_STATUS & CONSOLE_TX_STATUS_BIT) {}
+
+        //kada god kontroler izazove prekid citam karaktere iz nejgovog data registra sve dok je odgovarajuci statusni bit setovan
+        while ( *(char*)CONSOLE_STATUS & CONSOLE_RX_STATUS_BIT && !CCB::inputBuffer->isFull()) {      //can write
+            char volatile c = *((char*)CONSOLE_RX_DATA);
+            //if ( c == 13) break;
+            CCB::inputBuffer->put(c);
+            CCB::readyToRead->signal();
+        }
+
+    }
+
+    plic_complete(code);
+
+
+
+   //console_handler();
 }
 
 //prekidna rutina za izuzetke - prije svega za ecall
@@ -196,6 +217,31 @@ void Riscv::handleExceptions()
             TCB::dispatch(true);
 
             load_a0((uint64)0);
+
+            break;
+        }
+
+        case syscallCodes::getc: {
+
+            CCB::readyToRead->wait();
+
+            char volatile c = CCB::inputBuffer->get();
+
+            load_a0((uint64)c);
+
+            break;
+        }
+
+        case syscallCodes::putc: {
+
+            char volatile c = (char)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            // TODO: Prijaviti gresku ako je izlazni bafer pun
+            if ( CCB::outputBuffer->isFull());  //treba 'prijaviti gresku'
+            else {
+                CCB::outputBuffer->put(c);
+                CCB::cnt++;
+            }
 
             break;
         }

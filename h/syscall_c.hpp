@@ -50,14 +50,13 @@ int sem_signal (sem_t id);
 typedef unsigned long time_t;
 
 int time_sleep (time_t);
-/*
 
 const int EOF = -1;
 
 char getc ();
 
 void putc (char);
-*/
+
 #endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_SYSCALL_C_HPP
 
 

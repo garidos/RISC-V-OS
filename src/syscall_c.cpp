@@ -120,3 +120,26 @@ int time_sleep (time_t time) {
 
     return res;
 }
+
+
+char getc () {
+
+    Riscv::load_a0((uint64)Riscv::syscallCodes::getc);
+
+    char res;
+    __asm__ volatile("ecall;");
+    __asm__ volatile("mv %0, a0" : "=r" (res));
+
+    return res;
+
+}
+
+//TODO: napraviti funkciju za citanje a0 u neku promjenljivu u Riscv
+
+void putc (char c) {
+
+    Riscv::load_a1((uint64)c);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::putc);
+
+    __asm__ volatile("ecall;");
+}

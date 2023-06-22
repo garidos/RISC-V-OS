@@ -7,6 +7,7 @@
 #include "../lib/console.h"
 #include "../h/print.hpp"
 #include "../h/syscall_c.hpp"
+#include "../h/_console.hpp"
 
 
 void workerBodyA(void* arg)
@@ -154,6 +155,12 @@ int main() {
     thread_t idle;
 
     thread_create(&idle, TCB::idleThreadBody, nullptr);
+
+    CCB::inputBuffer = new Buffer(CCB::cap);
+    CCB::outputBuffer = new Buffer(CCB::cap);
+    sem_open(&CCB::readyToRead, 0);
+
+    thread_create(&CCB::consumer, CCB::outputThreadBody, nullptr);
 /*
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
@@ -200,9 +207,20 @@ int main() {
         delete thread;
     }
 
-    delete idle;
-
     printString("Finished\n");
+
+    while(CCB::cnt > 0) thread_dispatch();
+
+    delete idle;
+    delete CCB::consumer;
+
+    /*
+    char c = getc();
+    putc(c);
+    putc('\n');*/
+
+
+
 
     return 0;
 }
