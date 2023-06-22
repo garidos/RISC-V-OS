@@ -101,5 +101,6 @@ _ZN5Riscv14trapExceptionsEv:
     .endr
 
     ld a0, 10 * 8(a0)
+    //treb i a0 jer sam povratnu vrijednost upisao u postojeci kontekst
 
     sret

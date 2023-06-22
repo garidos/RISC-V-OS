@@ -89,7 +89,7 @@ private:
 
         this->next = nullptr;
         //main funkcija ce imati prazno tijelo, i ona ce prva da se pravi i odmah izvrsava, tako da se ne treba stavljati u scheduler
-        if ( body != nullptr) {
+        if ( body != nullptr || wrapper == userMainWrapper) {   //jer stalvjam u userMain body nullptr, pa da bi se stavilo u scheduler
             if ( schedulerHead != nullptr )
             {
                 schedulerTail->next = this;
@@ -157,7 +157,7 @@ public:
 
     static TCB* create(Body body, void* arg, uint64* stack);
 
-    static TCB* createAndSwitchToUser(Body body, void* arg, uint64* stack);
+    static TCB* createAndSwitchToUser(uint64* stack);
 
     static void idleThreadBody(void*);
 };

@@ -102,7 +102,8 @@ void Riscv::handleExceptions()
 
             int res = 0;
             if ( *handle == nullptr) res = -3;
-            load_a0((uint64) res);
+            //load_a0((uint64) res);
+            TCB::running->context[TCB::registerOffs::a0Offs] = res;
 
             break;
         }
@@ -116,8 +117,8 @@ void Riscv::handleExceptions()
             TCB::dispatch(false);
 
             //ako se ispravno izvrsi nikada nece doci do ovog dijela
-            int res = 1;
-            load_a0((uint64)res);
+
+            TCB::running->context[TCB::registerOffs::a0Offs] = 1;
 
             break;
         }
@@ -165,7 +166,7 @@ void Riscv::handleExceptions()
             int res = 0;
             if ( *handle == nullptr) res = -2;
 
-            load_a0((uint64) res);
+            TCB::running->context[TCB::registerOffs::a0Offs] = res;
 
             break;
         }
@@ -176,7 +177,7 @@ void Riscv::handleExceptions()
 
             handle->release();
 
-            load_a0((uint64)0);
+            TCB::running->context[TCB::registerOffs::a0Offs] = 0;
 
             break;
         }
@@ -191,7 +192,7 @@ void Riscv::handleExceptions()
             //ako je semafor dealociran dok je nit bila blokirana na njemu
             if ( !id->active() ) res = -2;
 
-            load_a0((uint64)res);
+            TCB::running->context[TCB::registerOffs::a0Offs] = res;
 
             break;
         }
@@ -202,7 +203,7 @@ void Riscv::handleExceptions()
 
             id->signal();
 
-            load_a0((uint64)0);
+            TCB::running->context[TCB::registerOffs::a0Offs] = 0;
 
             break;
         }
@@ -216,7 +217,7 @@ void Riscv::handleExceptions()
 
             TCB::dispatch(true);
 
-            load_a0((uint64)0);
+            TCB::running->context[TCB::registerOffs::a0Offs] = 0;
 
             break;
         }
@@ -227,7 +228,9 @@ void Riscv::handleExceptions()
 
             char volatile c = CCB::inputBuffer->get();
 
-            load_a0((uint64)c);
+            //load_a0((uint64)c);
+            TCB::running->context[TCB::registerOffs::a0Offs] = c;
+            // da se a0 ne bi slucajno promjenilo do trenutka restauracije, ovako ga upisem u sacuvani kontekst i znam da ce ispravna vrijednost da bude u a0 kada se restauira u trap rutini
 
             break;
         }
@@ -244,6 +247,12 @@ void Riscv::handleExceptions()
             }
 
             break;
+        }
+
+        default: {
+
+            while(true);
+
         }
     }
 

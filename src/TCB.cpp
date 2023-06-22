@@ -4,7 +4,6 @@
 
 #include "../h/TCB.hpp"
 #include "../h/riscv.hpp"
-#include "../lib/console.h"
 
 TCB* TCB::schedulerHead = nullptr;
 TCB* TCB::schedulerTail = nullptr;
@@ -12,12 +11,15 @@ TCB* TCB::sleepingHead = nullptr;
 TCB* TCB::running = nullptr;
 uint64 TCB::timeSliceCounter = 0;
 
+void userMain();
+
 TCB* TCB::create(Body body, void *arg, uint64 *stack) {
     return new TCB(body, arg, stack, DEFAULT_TIME_SLICE, TCB::threadWrapper);
 }
 
-TCB* TCB::createAndSwitchToUser(Body body, void *arg, uint64 *stack) {
-    return new TCB(body, arg, stack, DEFAULT_TIME_SLICE, TCB::userMainWrapper);
+TCB* TCB::createAndSwitchToUser(uint64 *stack) {
+    // nije bitno sta se stavi u body (samo ako stavim nullptr moram da promjenim uslov za stavljanje u scheduler u konstruktoru), jer ce se userMain pozivati direktno
+    return new TCB(nullptr, nullptr, stack, DEFAULT_TIME_SLICE, TCB::userMainWrapper);
 }
 
 void TCB::threadWrapper() {
@@ -43,8 +45,7 @@ void TCB::userMainWrapper() {
     Riscv::mc_sstatus(Riscv::SSTATUS_SPP);
     Riscv::returnFromSMode();
     //poziv stvarnog tijela niti
-    TCB::running->body(TCB::running->argument);
-    //userMain();
+    userMain();
 
     //nit je zavrsena
     TCB::running->setFinished(true);
