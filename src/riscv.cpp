@@ -245,6 +245,12 @@ void Riscv::handleExceptions()
 
             break;
         }
+
+        default: {
+
+            while(true);
+
+        }
     }
 
     w_sstatus(sstatus);
