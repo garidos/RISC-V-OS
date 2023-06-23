@@ -86,7 +86,10 @@ void Riscv::handleExceptions()
     uint64 volatile sstatus = r_sstatus();
     uint64 volatile sscause = r_scause();
 
-    if ( sscause == 14);
+    //nit se blokira ako dodje do nekog ne ocekivanog izuzetka
+    if ( sscause != 8 && sscause != 9) {
+        while(true);
+    }
 
     uint64 volatile code = TCB::running->context[TCB::registerOffs::a0Offs];
 
@@ -99,6 +102,9 @@ void Riscv::handleExceptions()
             uint64* volatile stack = (uint64*)TCB::running->context[TCB::registerOffs::a4Offs];
 
             *handle = TCB::create(body, arg, stack);
+
+            //ako je nit napravljena iz korisnickog rezima, onda i ona treba da bude u korisnickom rezimu, pa se postavlja polje setUser na osnovu koga ce se podesiti sstatus pri startovanju niti
+            if ( (sstatus & Riscv::SSTATUS_SPP) == 0) (*handle)->setUser = true;
 
             int res = 0;
             if ( *handle == nullptr) res = -3;
@@ -247,12 +253,6 @@ void Riscv::handleExceptions()
             }
 
             break;
-        }
-
-        default: {
-
-            while(true);
-
         }
     }
 

@@ -27,7 +27,7 @@ void workerBodyA(void* arg)
             {
                 // busy wait
             }
-//            TCB::yield();
+            thread_dispatch();
         }
     }
     //sem_signal(sem);
@@ -50,7 +50,7 @@ void workerBodyB(void* arg)
             {
                 // busy wait
             }
-//            TCB::yield();
+            thread_dispatch();
         }
     }
     //sem_signal(sem);
@@ -146,7 +146,7 @@ int main() {
     Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
     Riscv::w_stvec((uint64) & Riscv::vectorTable | (uint64) 1);
     //Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
-    thread_t mainThread, idle, userMainThread;
+    thread_t mainThread, idle;//, userMainThread;
 
     //prva nit mora da se napravi bez poziva prekida, jer ce se tu dohvatati kontekst running niti koja jos ne postoji
     mainThread = TCB::create( nullptr, nullptr, new uint64[DEFAULT_STACK_SIZE]);
@@ -160,14 +160,14 @@ int main() {
 
     thread_create(&CCB::consumer, CCB::outputThreadBody, nullptr);
 
-    Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
+    /*Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
     userMainThread = TCB::createAndSwitchToUser(new uint64[DEFAULT_STACK_SIZE]);
 
 
     while(!userMainThread->isFinished()) {
         thread_dispatch();
-    }
+    }*/
 
 /*
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
@@ -177,7 +177,8 @@ int main() {
         time_sleep(10);
     }*/
 
-    /*
+    thread_t threads[5];
+
     sem_t sem;
     sem_open(&sem, 1);
 
@@ -199,14 +200,14 @@ int main() {
     }
 
     //thread_join(threads[2]);
-
+    /*
     while (!(threads[1]->isFinished() &&
              threads[2]->isFinished() &&
              threads[3]->isFinished() &&
              threads[4]->isFinished()))
     {
         thread_dispatch();
-    }
+    }*/
 
     sem_close(sem);
 
@@ -215,13 +216,13 @@ int main() {
         delete thread;
     }
 
-    printString("Finished\n");*/
+    printString("Finished\n");
 
     while(CCB::cnt > 0) thread_dispatch();
 
     delete idle;
     delete CCB::consumer;
-    delete userMainThread;
+    //delete userMainThread;
     delete mainThread;
 
     /*

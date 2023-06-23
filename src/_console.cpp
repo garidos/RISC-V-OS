@@ -3,6 +3,7 @@
 //
 
 #include "../h/_console.hpp"
+#include "../h/syscall_c.hpp"
 
 int CCB::cap = 1000;
 int CCB::cnt = 0;
@@ -25,6 +26,7 @@ void CCB::outputThreadBody(void *) {
             CCB::cnt--;
 
         }
+        thread_dispatch();
     }
 }
 

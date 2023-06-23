@@ -23,6 +23,8 @@ TCB* TCB::createAndSwitchToUser(uint64 *stack) {
 }
 
 void TCB::threadWrapper() {
+    //da bi bio siguran da sve niti koje su napravljene u korisnickom rezimu rade u istom tom rezimu ( setUser se postavlja u thread_create ako se nit pravi  iz korisnickog )
+    if ( TCB::running->setUser) Riscv::mc_sstatus(Riscv::SSTATUS_SPP);
     Riscv::returnFromSMode();
     //poziv stvarnog tijela niti
     TCB::running->body(TCB::running->argument);

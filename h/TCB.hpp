@@ -73,7 +73,7 @@ private:
 
     TCB(Body threadBody, void* threadArgument, uint64* allocatedStack, uint64 timeSlice, void (*wrapper)()) :
             body(threadBody), argument(threadArgument), stack(allocatedStack), timeLeft(0), timeSlice(timeSlice),
-            finished(false), context(new uint64[33]), waitingHead(nullptr), waitingTail(nullptr)
+            finished(false), context(new uint64[33]), waitingHead(nullptr), waitingTail(nullptr), setUser(false)
     {
         if ( stack != nullptr) context[32] = (uint64) &stack[DEFAULT_STACK_SIZE];
         else context[32] = 0;
@@ -117,6 +117,7 @@ private:
     TCB* waitingHead;
     TCB* waitingTail;
 
+    bool setUser;
 
     static void threadWrapper();
     static void userMainWrapper();
