@@ -7,8 +7,8 @@
 
 int CCB::cap = 1000;
 int CCB::cnt = 0;
-Buffer *CCB::inputBuffer = nullptr;
-Buffer *CCB::outputBuffer = nullptr;
+consoleBuffer *CCB::inputBuffer = nullptr;
+consoleBuffer *CCB::outputBuffer = nullptr;
 SCB *CCB::readyToRead = nullptr;
 TCB* CCB::consumer = nullptr;
 
@@ -31,7 +31,7 @@ void CCB::outputThreadBody(void *) {
 }
 
 
-void Buffer::put(char c) {
+void consoleBuffer::put(char c) {
 
     if ( isEmpty()) head = tail = 0;
     arr[head] = c;
@@ -39,7 +39,7 @@ void Buffer::put(char c) {
 
 }
 
-char Buffer::get() {
+char consoleBuffer::get() {
 
     char c;
 

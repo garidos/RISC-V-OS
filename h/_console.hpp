@@ -8,7 +8,7 @@
 #include "../h/TCB.hpp"
 #include "../h/SCB.hpp"
 
-class Buffer {
+class consoleBuffer {
 
 private:
 
@@ -19,14 +19,14 @@ private:
 
 public:
 
-    Buffer(int cap) : capacity(cap) {
+    consoleBuffer(int cap) : capacity(cap) {
 
         head = tail = -1;
         arr = new char[capacity];
 
     }
 
-    ~Buffer() {
+    ~consoleBuffer() {
         head = tail = -1;
         delete[] arr;
     }
@@ -50,7 +50,7 @@ private:
     static int cap;
 
     static SCB *readyToRead;
-    static Buffer *inputBuffer, *outputBuffer;
+    static consoleBuffer *inputBuffer, *outputBuffer;
 
 public:
 
