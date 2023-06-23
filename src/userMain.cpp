@@ -10,6 +10,4 @@ void userMain() {
     putc(c);
     putc('\n');
 
-
-
 }
