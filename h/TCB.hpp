@@ -71,7 +71,7 @@ private:
     * 32 * 8(context) : ssp //nije sistemski stek vec pokazivac na vrh steka u trenutku prekida
     */
 
-    TCB(Body threadBody, void* threadArgument, uint64* allocatedStack, uint64 timeSlice, void (*wrapper)()) :
+    TCB(Body threadBody, void* threadArgument, uint64* allocatedStack, uint64 timeSlice, void (*wrapper)(), bool start) :
             body(threadBody), argument(threadArgument), stack(allocatedStack), timeLeft(0), timeSlice(timeSlice),
             finished(false), context(new uint64[33]), waitingHead(nullptr), waitingTail(nullptr), setUser(false)
     {
@@ -90,14 +90,13 @@ private:
         this->next = nullptr;
         //main funkcija ce imati prazno tijelo, i ona ce prva da se pravi i odmah izvrsava, tako da se ne treba stavljati u scheduler
         if ( body != nullptr || wrapper == userMainWrapper) {   //jer stalvjam u userMain body nullptr, pa da bi se stavilo u scheduler
-            if ( schedulerHead != nullptr )
-            {
-                schedulerTail->next = this;
-                schedulerTail = this;
-            }
-            else
-            {
-                schedulerHead = schedulerTail = this;
+            if (start) {
+                if (schedulerHead != nullptr) {
+                    schedulerTail->next = this;
+                    schedulerTail = this;
+                } else {
+                    schedulerHead = schedulerTail = this;
+                }
             }
         }
     }
@@ -159,6 +158,8 @@ public:
     static TCB* create(Body body, void* arg, uint64* stack);
 
     static TCB* createAndSwitchToUser(uint64* stack);
+
+    static TCB* justCreate(Body body, void* arg, uint64* stack);
 
     static void idleThreadBody(void*);
 };

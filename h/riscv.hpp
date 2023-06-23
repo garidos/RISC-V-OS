@@ -16,7 +16,7 @@ public:
     //kodovi sistemskih poziva iz C API-ja koji se koriste pri pozivu sistemskih poziva iz ABI-ja
     enum syscallCodes {
         mem_alloc = 0x01, mem_free = 0x02, thread_create = 0x11, thread_exit = 0x12, thread_dispatch = 0x13, thread_join = 0x14,
-        sem_open = 0x21, sem_close = 0x22, sem_wait = 0x23, sem_signal = 0x24, time_sleep = 0x31, getc = 0x41, putc = 0x42
+        sem_open = 0x21, sem_close = 0x22, sem_wait = 0x23, sem_signal = 0x24, time_sleep = 0x31, getc = 0x41, putc = 0x42, thread_just_create = 0x51, thread_start = 0x52
     };
 
     static void load_a0(uint64 value) {

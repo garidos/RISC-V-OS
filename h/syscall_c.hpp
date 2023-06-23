@@ -57,6 +57,15 @@ char getc ();
 
 void putc (char);
 
+//pomocni pozivi za CPP API
+
+int thread_just_create(
+        thread_t* handle,
+        void(*start_routine)(void*),
+        void* arg);
+
+void thread_start(thread_t handle);
+
 #endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_SYSCALL_C_HPP
 
 

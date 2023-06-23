@@ -143,3 +143,32 @@ void putc (char c) {
 
     __asm__ volatile("ecall;");
 }
+
+
+int thread_just_create(thread_t* handle, void(*start_routine)(void*), void* arg) {
+    if ( handle == nullptr) return -1;
+
+    uint64 * stack = new uint64[DEFAULT_STACK_SIZE];
+    if ( stack == nullptr ) return -2;
+
+    Riscv::load_a4((uint64) stack);
+    Riscv::load_a3((uint64) arg);
+    Riscv::load_a2((uint64) start_routine);
+    Riscv::load_a1((uint64) handle);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::thread_just_create);
+
+    int res;
+    __asm__ volatile("ecall;");
+    __asm__ volatile("mv %0, a0" : "=r" (res));
+
+    return res;
+}
+
+void thread_start(thread_t thread) {
+    if ( thread == nullptr || thread->isFinished()) return;
+
+    Riscv::load_a1((uint64)thread);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::thread_start);
+
+    __asm__ volatile("ecall;");
+}

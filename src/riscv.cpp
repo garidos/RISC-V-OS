@@ -254,6 +254,34 @@ void Riscv::handleExceptions()
 
             break;
         }
+
+        case syscallCodes::thread_just_create: {
+            TCB** volatile handle = (TCB**)TCB::running->context[TCB::registerOffs::a1Offs];
+            Body volatile body = (Body)TCB::running->context[TCB::registerOffs::a2Offs];
+            void* volatile arg = (void*)TCB::running->context[TCB::registerOffs::a3Offs];
+            uint64* volatile stack = (uint64*)TCB::running->context[TCB::registerOffs::a4Offs];
+
+            *handle = TCB::justCreate(body, arg, stack);
+
+            //ako je nit napravljena iz korisnickog rezima, onda i ona treba da bude u korisnickom rezimu, pa se postavlja polje setUser na osnovu koga ce se podesiti sstatus pri startovanju niti
+            if ( (sstatus & Riscv::SSTATUS_SPP) == 0) (*handle)->setUser = true;
+
+            int res = 0;
+            if ( *handle == nullptr) res = -3;
+            //load_a0((uint64) res);
+            TCB::running->context[TCB::registerOffs::a0Offs] = res;
+
+            break;
+        }
+
+        case syscallCodes::thread_start: {
+
+            TCB* volatile thread = (TCB*)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            TCB::putScheduler(thread);
+
+            break;
+        }
     }
 
     w_sstatus(sstatus);

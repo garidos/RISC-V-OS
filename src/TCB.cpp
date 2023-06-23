@@ -14,12 +14,17 @@ uint64 TCB::timeSliceCounter = 0;
 void userMain();
 
 TCB* TCB::create(Body body, void *arg, uint64 *stack) {
-    return new TCB(body, arg, stack, DEFAULT_TIME_SLICE, TCB::threadWrapper);
+    return new TCB(body, arg, stack, DEFAULT_TIME_SLICE, TCB::threadWrapper, true);
 }
 
 TCB* TCB::createAndSwitchToUser(uint64 *stack) {
     // nije bitno sta se stavi u body (samo ako stavim nullptr moram da promjenim uslov za stavljanje u scheduler u konstruktoru), jer ce se userMain pozivati direktno
-    return new TCB(nullptr, nullptr, stack, DEFAULT_TIME_SLICE, TCB::userMainWrapper);
+    return new TCB(nullptr, nullptr, stack, DEFAULT_TIME_SLICE, TCB::userMainWrapper, true);
+}
+
+//pravi nit bez startovanja ( stavljanja u scheduler )
+TCB* TCB::justCreate(Body body, void *arg, uint64 *stack) {
+    return new TCB(body, arg, stack, DEFAULT_TIME_SLICE, TCB::threadWrapper, false);
 }
 
 void TCB::threadWrapper() {
