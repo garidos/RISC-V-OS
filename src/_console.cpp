@@ -10,6 +10,7 @@ int CCB::cnt = 0;
 consoleBuffer *CCB::inputBuffer = nullptr;
 consoleBuffer *CCB::outputBuffer = nullptr;
 SCB *CCB::readyToRead = nullptr;
+SCB *CCB::readyToWrite = nullptr;
 TCB* CCB::consumer = nullptr;
 
 
@@ -23,7 +24,7 @@ void CCB::outputThreadBody(void *) {
 
             if(CCB::outputBuffer->isEmpty()) break;
             *((char*)CONSOLE_TX_DATA) = CCB::outputBuffer->get();
-            CCB::cnt--;
+            CCB::readyToWrite->signal();
 
         }
         thread_dispatch();

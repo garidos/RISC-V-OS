@@ -19,29 +19,23 @@ int thread_create ( thread_t* handle, void(*start_routine)(void*), void* arg) {
     Riscv::load_a1((uint64) handle);
     Riscv::load_a0((uint64)Riscv::syscallCodes::thread_create);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 int thread_exit () {
 
     Riscv::load_a0((uint64)Riscv::syscallCodes::thread_exit);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 void thread_dispatch () {
 
     Riscv::load_a0((uint64)Riscv::syscallCodes::thread_dispatch);
 
-    __asm__ volatile("ecall;");
+    Riscv::ecall();
 }
 
 void thread_join (thread_t handle) {
@@ -50,7 +44,7 @@ void thread_join (thread_t handle) {
     Riscv::load_a1((uint64)handle);
     Riscv::load_a0((uint64)Riscv::syscallCodes::thread_join);
 
-    __asm__ volatile("ecall;");
+    Riscv::ecall();
 }
 
 int sem_open (sem_t* handle, unsigned init) {
@@ -60,11 +54,8 @@ int sem_open (sem_t* handle, unsigned init) {
     Riscv::load_a1((uint64)handle);
     Riscv::load_a0((uint64)Riscv::syscallCodes::sem_open);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 int sem_close(sem_t handle) {
@@ -73,25 +64,18 @@ int sem_close(sem_t handle) {
     Riscv::load_a1((uint64)handle);
     Riscv::load_a0((uint64)Riscv::syscallCodes::sem_close);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 int sem_wait (sem_t id) {
-
     if ( id == nullptr || !id->active()) return -1;
 
     Riscv::load_a1((uint64)id);
     Riscv::load_a0((uint64)Riscv::syscallCodes::sem_wait);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 int sem_signal (sem_t id) {
@@ -101,11 +85,8 @@ int sem_signal (sem_t id) {
     Riscv::load_a1((uint64)id);
     Riscv::load_a0((uint64)Riscv::syscallCodes::sem_signal);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 int time_sleep (time_t time) {
@@ -114,11 +95,8 @@ int time_sleep (time_t time) {
     Riscv::load_a1((uint64)time);
     Riscv::load_a0((uint64)Riscv::syscallCodes::time_sleep);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 
@@ -126,22 +104,17 @@ char getc () {
 
     Riscv::load_a0((uint64)Riscv::syscallCodes::getc);
 
-    char res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
-
+    Riscv::ecall();
+    return (char)Riscv::return_a0();
 }
 
-//TODO: napraviti funkciju za citanje a0 u neku promjenljivu u Riscv
 
 void putc (char c) {
 
     Riscv::load_a1((uint64)c);
     Riscv::load_a0((uint64)Riscv::syscallCodes::putc);
 
-    __asm__ volatile("ecall;");
+    Riscv::ecall();
 }
 
 
@@ -157,11 +130,8 @@ int thread_just_create(thread_t* handle, void(*start_routine)(void*), void* arg)
     Riscv::load_a1((uint64) handle);
     Riscv::load_a0((uint64)Riscv::syscallCodes::thread_just_create);
 
-    int res;
-    __asm__ volatile("ecall;");
-    __asm__ volatile("mv %0, a0" : "=r" (res));
-
-    return res;
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
 }
 
 void thread_start(thread_t thread) {
@@ -170,5 +140,5 @@ void thread_start(thread_t thread) {
     Riscv::load_a1((uint64)thread);
     Riscv::load_a0((uint64)Riscv::syscallCodes::thread_start);
 
-    __asm__ volatile("ecall;");
+    Riscv::ecall();
 }

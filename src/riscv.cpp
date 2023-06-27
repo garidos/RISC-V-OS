@@ -88,7 +88,7 @@ void Riscv::handleExceptions()
 
     //nit se blokira ako dodje do nekog ne ocekivanog izuzetka
     if ( sscause != 8 && sscause != 9) {
-        while(true);
+        Riscv::handleIllegalException(sscause);
     }
 
     uint64 volatile code = TCB::running->context[TCB::registerOffs::a0Offs];
@@ -108,7 +108,6 @@ void Riscv::handleExceptions()
 
             int res = 0;
             if ( *handle == nullptr) res = -3;
-            //load_a0((uint64) res);
             TCB::running->context[TCB::registerOffs::a0Offs] = res;
 
             break;
@@ -243,14 +242,11 @@ void Riscv::handleExceptions()
 
         case syscallCodes::putc: {
 
+            CCB::readyToWrite->wait();
+
             char volatile c = (char)TCB::running->context[TCB::registerOffs::a1Offs];
 
-            // TODO: Prijaviti gresku ako je izlazni bafer pun
-            if ( CCB::outputBuffer->isFull());  //treba 'prijaviti gresku'
-            else {
-                CCB::outputBuffer->put(c);
-                CCB::cnt++;
-            }
+            CCB::outputBuffer->put(c);
 
             break;
         }
@@ -294,4 +290,56 @@ void Riscv::returnFromSMode()
 {
     __asm__ volatile("csrw sepc, ra");
     __asm__ volatile("sret");
+}
+
+void Riscv::handleIllegalException(uint64 scause) {
+    char const* part1 = "Kernel stopped!\nCause: ";
+    char const* part2_cause = nullptr;
+    switch(scause) {
+        case 0: {
+            part2_cause = "Instruction address misaligned\n";
+            break;
+        }
+        case 1: {
+            part2_cause = "Instruction access fault\n";
+            break;
+        }
+        case 2: {
+            part2_cause = "Illegal instruction\n";
+            break;
+        }
+        case 3: {
+            part2_cause = "Breakpoint\n";
+            break;
+        }
+        case 4: {
+            part2_cause = "Load address misaligned\n";
+            break;
+        }
+        case 5: {
+            part2_cause = "Load access fault\n";
+            break;
+        }
+        case 6: {
+            part2_cause = "Store address misaligned\n";
+            break;
+        }
+        case 7: {
+            part2_cause = "Store access fault\n";
+            break;
+        }
+    }
+    while ( *part1 != '\0') {
+        if (*((char*)CONSOLE_STATUS) & CONSOLE_TX_STATUS_BIT) {
+            *((char*)CONSOLE_TX_DATA) = *part1;
+            part1++;
+        }
+    }
+    while (*part2_cause != '\0') {
+        if (*((char*)CONSOLE_STATUS) & CONSOLE_TX_STATUS_BIT) {
+            *((char*)CONSOLE_TX_DATA) = *part2_cause;
+            part2_cause++;
+        }
+    }
+    while(true);
 }

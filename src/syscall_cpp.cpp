@@ -64,13 +64,20 @@ void Console::putc(char c) {
     ::putc(c);
 };
 
+/*
+ * s obzirom da nemamo pristup handleru niti smijemo dodavati nestaticka polja u klasu, morao sam na ovaj nacin da uradim
+ * period se postavlja pri stvaranju objekta ove klase, i ne postoji nacin da se promjeni nakon toga
+ * ja sam ovo iskoristio da bih realizovao operaciju terminate, odnosno gasenje periodicne niti, tako sto bih u terminate promjenio vrijednost perioda ( nije bitno na sta)
+ * a u wrapperu bih se vrtio sve dok je period ne promjenjen, nakon cega bi se zavrsio rad niti
+ */
 void PeriodicThread::terminate() {
-    //Thread::~Thread();
+    period++;
 };
 
 void PeriodicThread::periodicThreadWrapper(void *arg) {
     PeriodicThread* thread = (PeriodicThread*)arg;
-    while(true) {
+    time_t startPeriod = thread->period;
+    while(startPeriod == thread->period) {
         thread->periodicActivation();
         thread->sleep(thread->period);
     }

@@ -4,6 +4,7 @@
 
 #include "../h/TCB.hpp"
 #include "../h/riscv.hpp"
+#include "../h/syscall_c.hpp"
 
 TCB* TCB::schedulerHead = nullptr;
 TCB* TCB::schedulerTail = nullptr;
@@ -39,12 +40,8 @@ void TCB::threadWrapper() {
     TCB::running->setFinished(true);
     //oslobadjaju se sve niti koje su cekale na ovu
     TCB::running->emptyWaiting();
-    //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
-    //TCB::timeSliceCounter = 0;
-    //ovo je u stvari thread_dispatch(), ali da ne bi ovde pozivao c api funkcije
-    Riscv::load_a0((uint64)Riscv::syscallCodes::thread_dispatch);
-    __asm__ volatile("ecall;");
 
+    thread_dispatch();
 }
 
 void TCB::userMainWrapper() {
@@ -56,12 +53,10 @@ void TCB::userMainWrapper() {
 
     //nit je zavrsena
     TCB::running->setFinished(true);
-    //za sad nije problem sto se ovde poziva dispatch, ali kada se dodaju nniti koje se izvrsavaju u korisnickom rezimu, dispatch ce se morati pozivati iz sistemskog rezima
-    TCB::running->emptyWaiting();
-    //ovo je u stvari thread_dispatch(), ali da ne bi ovde pozivao c api funkcije
-    Riscv::load_a0((uint64)Riscv::syscallCodes::thread_dispatch);
-    __asm__ volatile("ecall;");
 
+    TCB::running->emptyWaiting();
+
+    thread_dispatch();
 }
 
 void TCB::dispatch(bool flag) {
@@ -154,14 +149,8 @@ uint64* TCB::getContext() {
     return TCB::running->context;
 }
 
-void TCB::yield()
-{
-    __asm__ volatile ("ecall");
-}
-
 void TCB::idleThreadBody(void*) {
     while(true) {
-        Riscv::load_a0((uint64)Riscv::syscallCodes::thread_dispatch);
-        __asm__ volatile("ecall;");
+        thread_dispatch();
     };
 }

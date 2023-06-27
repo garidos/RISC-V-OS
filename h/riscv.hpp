@@ -19,6 +19,19 @@ public:
         sem_open = 0x21, sem_close = 0x22, sem_wait = 0x23, sem_signal = 0x24, time_sleep = 0x31, getc = 0x41, putc = 0x42, thread_just_create = 0x51, thread_start = 0x52
     };
 
+    static void handleIllegalException(uint64 scause);
+
+    //ljepse izgleda od samog asm bloka
+    static void ecall() {
+        __asm__ volatile("ecall;");
+    }
+
+    static uint64 return_a0() {
+        uint64 res;
+        __asm__ volatile("mv %0, a0" : "=r" (res));
+        return res;
+    }
+
     static void load_a0(uint64 value) {
         __asm__ volatile("mv a0, %0" : : "r" (value));
     }

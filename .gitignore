@@ -2,4 +2,3 @@ build/
 kernel
 kernel.asm
 *.s
-*print*

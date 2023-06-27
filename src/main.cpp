@@ -24,6 +24,7 @@ int main() {
     CCB::inputBuffer = new consoleBuffer(CCB::cap);
     CCB::outputBuffer = new consoleBuffer(CCB::cap);
     sem_open(&CCB::readyToRead, 0);
+    sem_open(&CCB::readyToWrite, CCB::cap);
 
     thread_create(&CCB::consumer, CCB::outputThreadBody, nullptr);
 
@@ -32,13 +33,18 @@ int main() {
     userMainThread = TCB::createAndSwitchToUser(new uint64[DEFAULT_STACK_SIZE]);
 
 
-    while(!userMainThread->isFinished()) {
-        thread_dispatch();
-    }
+    thread_join(userMainThread);
 
+    //ceka se da se obrade svi zahtjevi za ispis pa se onda zavrsava sistem
+    while(CCB::readyToWrite->getVal() != CCB::cap) thread_dispatch();
 
-    while(CCB::cnt > 0) thread_dispatch();
-
+    CCB::consumer->setFinished(true);
+    sem_close(CCB::readyToWrite);
+    sem_close(CCB::readyToRead);
+    delete CCB::inputBuffer;
+    delete CCB::outputBuffer;
+    idle->setFinished(true);
+    mainThread->setFinished(true);
     delete idle;
     delete CCB::consumer;
     delete userMainThread;

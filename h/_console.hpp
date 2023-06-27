@@ -49,7 +49,7 @@ private:
 
     static int cap;
 
-    static SCB *readyToRead;
+    static SCB *readyToRead, *readyToWrite;
     static consoleBuffer *inputBuffer, *outputBuffer;
 
 public:
