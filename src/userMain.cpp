@@ -1,7 +1,3 @@
-//
-// Created by os on 6/22/23.
-//
-
 #include "../h/syscall_c.hpp"
 #include "../h/syscall_cpp.hpp"
 #include "../h/printing.hpp"
@@ -16,12 +12,30 @@ class Moja : public Thread {
     }
 };
 
-void userMain() {
+class Per : public PeriodicThread {
+public:
+    Per() : PeriodicThread(10) {};
+protected:
+    virtual void periodicActivation() {
+        printString("OP\n");
+    }
+};
 
+void userMain() {
+    /*
     Moja *t = new Moja();
     t->start();
 
-    t->join();
+    t->join();*/
+
+    Per *p = new Per();
+    p->start();
+
+    Thread::sleep(51);
+
+    p->terminate();
+
+    //Thread::sleep(20);
 
     printString("OS Projekat\n");
 

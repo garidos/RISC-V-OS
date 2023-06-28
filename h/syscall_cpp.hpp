@@ -1,13 +1,12 @@
-//
-// Created by os on 6/23/23.
-//
-
 #ifndef PROJEKAT_SYSCALL_CPP_HPP
 #define PROJEKAT_SYSCALL_CPP_HPP
 
 #include "syscall_c.hpp"
-//void* ::operator new (size_t);
-//void ::operator delete (void*);
+
+void* operator new(size_t);
+void* operator new[](size_t);
+void operator delete(void*) noexcept;
+void operator delete[](void*) noexcept;
 
 class Thread {
 public:

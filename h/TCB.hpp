@@ -1,13 +1,10 @@
-//
-// Created by os on 6/17/23.
-//
-
-// dio TCB klase uzet sa vjezbi
-
 #ifndef PROJEKAT_TCB_HPP
 #define PROJEKAT_TCB_HPP
 
+// osnova klase preuzeta sa vjezbi, pa su kasnije izmjenjene neke stvari ( nacin na koji se cuva kontekst, ulancavanje niti u razlicite nizove i dodata neka nova polja i funkcije )
+
 #include "../lib/hw.h"
+#include "../h/MemoryAllocator.hpp"
 
 using Body = void (*)(void*);
 
@@ -17,6 +14,7 @@ private:
 
     friend class Riscv;
     friend class SCB;
+    friend int main();
 
     Body body;
     void *argument;
@@ -73,7 +71,7 @@ private:
 
     TCB(Body threadBody, void* threadArgument, uint64* allocatedStack, uint64 timeSlice, void (*wrapper)(), bool start) :
             body(threadBody), argument(threadArgument), stack(allocatedStack), timeLeft(0), timeSlice(timeSlice),
-            finished(false), context(new uint64[33]), waitingHead(nullptr), waitingTail(nullptr), setUser(false)
+            finished(false), context((uint64*)MemoryAllocator::malloc(33 * sizeof(uint64))), waitingHead(nullptr), waitingTail(nullptr), setUser(false)
     {
         if ( stack != nullptr) context[32] = (uint64) &stack[DEFAULT_STACK_SIZE];
         else context[32] = 0;
@@ -117,6 +115,8 @@ private:
     TCB* waitingTail;
 
     bool setUser;
+    //broj korisnickih niti koje su aktivne, main ceka da se sve zavrse prije nego sto se zavrsi sam sistem
+    static int numOfUserThreads;
 
     static void threadWrapper();
     static void userMainWrapper();
@@ -162,11 +162,11 @@ public:
     static TCB* justCreate(Body body, void* arg, uint64* stack);
 
     static void idleThreadBody(void*);
+
+    void* operator new(size_t size);
+
+    void operator delete(void* pointer);
 };
-
-
-
-
 
 
 #endif //PROJEKAT_TCB_HPP

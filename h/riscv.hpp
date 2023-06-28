@@ -1,11 +1,7 @@
-//
-// Created by marko on 20.4.22..
-//
+#ifndef PROJEKAT_RISCV_HPP
+#define PROJEKAT_RISCV_HPP
 
-//preuzeto sa ps vjezbi
-
-#ifndef OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_RISCV_HPP
-#define OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_RISCV_HPP
+//preuzeto sa vjezbi i naknadno dodate neke stvari
 
 #include "../lib/hw.h"
 
@@ -19,19 +15,24 @@ public:
         sem_open = 0x21, sem_close = 0x22, sem_wait = 0x23, sem_signal = 0x24, time_sleep = 0x31, getc = 0x41, putc = 0x42, thread_just_create = 0x51, thread_start = 0x52
     };
 
+    //poziva se ukoliko dodje do neocekivanog izuzetka, blokira kernel, i ispisuje koji je razlog ( na osnovu scause-a )
     static void handleIllegalException(uint64 scause);
+
+    //bice inline jer su definisane unutar klase
 
     //ljepse izgleda od samog asm bloka
     static void ecall() {
         __asm__ volatile("ecall;");
     }
 
+    //vraca vrijednost koja je bila u a0
     static uint64 return_a0() {
         uint64 res;
         __asm__ volatile("mv %0, a0" : "=r" (res));
         return res;
     }
 
+    //pomocne funkcije za punjenje nekih registara
     static void load_a0(uint64 value) {
         __asm__ volatile("mv a0, %0" : : "r" (value));
     }
@@ -134,15 +135,14 @@ public:
     static void vectorTable();
 
     // rutine na koje se skace iz tabele prekidnih rutina
-    // one cuvaju kontekst i pozivaju odgovarajuci rukovalac nakon cega ucitavaju novi kontekst
-    // ???? da li onda za prekid koji izaziva konzola treba uopste da se cuva i restauira kontekst ( i ako kod ostala dva nit ostane ista nakon rukovaoca)????
+    // one cuvaju kontekst i pozivaju odgovarajuci rukovalac nakon cega ucitavaju novi(stari) kontekst
     static void trapSupervisorSoftwareInterrupt();
     static void trapSupervisorExternalInterrupt();
     static void trapExceptions();
 
 private:
 
-    // rukovaoci za razlicite vrste prekida i izuzetke
+    // rukovaoci za razlicite softverse, spoljasnje prekide i izuzetke
     static void handleSupervisorSoftwareInterrupt();
     static void handleSupervisorExternalInterrupt();
     static void handleExceptions();
@@ -270,4 +270,4 @@ inline void Riscv::w_sie(uint64 sie)
 
 
 
-#endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_RISCV_HPP
+#endif //PROJEKAT_RISCV_HPP

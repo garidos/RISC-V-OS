@@ -10,3 +10,5 @@ _ZN3TCB13contextSwitchEPmS0_:
     ret
 
     //cuva sra i stack trenutnog procesa, a ucitava sra i stack novog
+
+    //slicno kao kod sa vjezbi

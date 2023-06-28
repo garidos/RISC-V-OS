@@ -1,12 +1,7 @@
-//
-// Created by os on 6/22/23.
-//
-
 #include "../h/_console.hpp"
 #include "../h/syscall_c.hpp"
 
 int CCB::cap = 1000;
-int CCB::cnt = 0;
 consoleBuffer *CCB::inputBuffer = nullptr;
 consoleBuffer *CCB::outputBuffer = nullptr;
 SCB *CCB::readyToRead = nullptr;

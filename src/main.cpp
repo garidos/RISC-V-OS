@@ -1,7 +1,3 @@
-//
-// Created by os on 6/18/23.
-//
-
 #include "../h/riscv.hpp"
 #include "../h/TCB.hpp"
 #include "../h/syscall_c.hpp"
@@ -11,12 +7,14 @@
 
 int main() {
 
+    //zabranjuju se prekidi dok se zavrsi potrebna inicijalizacija i upisuje se odgovarajuca vrijednost u stvec
     Riscv::mc_sstatus(Riscv::SSTATUS_SIE);
     Riscv::w_stvec((uint64) & Riscv::vectorTable | (uint64) 1);
     thread_t mainThread, idle, userMainThread;
 
     //prva nit mora da se napravi bez poziva prekida, jer ce se tu dohvatati kontekst running niti koja jos ne postoji
-    mainThread = TCB::create( nullptr, nullptr, new uint64[DEFAULT_STACK_SIZE]);
+    //iz istog razloga ne moze ni new da se korisiti
+    mainThread = TCB::create( nullptr, nullptr, (uint64*)MemoryAllocator::malloc(DEFAULT_STACK_SIZE * sizeof(uint64)));
     TCB::running = mainThread;
 
     thread_create(&idle, TCB::idleThreadBody, nullptr);
@@ -36,7 +34,8 @@ int main() {
     thread_join(userMainThread);
 
     //ceka se da se obrade svi zahtjevi za ispis pa se onda zavrsava sistem
-    while(CCB::readyToWrite->getVal() != CCB::cap) thread_dispatch();
+    while(!CCB::outputBuffer->isEmpty()) thread_dispatch();
+    while(TCB::numOfUserThreads > 0) thread_dispatch();
 
     CCB::consumer->setFinished(true);
     sem_close(CCB::readyToWrite);

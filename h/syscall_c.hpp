@@ -1,9 +1,5 @@
-//
-// Created by os on 5/11/23.
-//
-
-#ifndef OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_SYSCALL_C_HPP
-#define OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_SYSCALL_C_HPP
+#ifndef PROJEKAT_SYSCALL_C_HPP
+#define PROJEKAT_SYSCALL_C_HPP
 
 #include "../lib/hw.h"
 #include "../h/TCB.hpp"
@@ -66,6 +62,6 @@ int thread_just_create(
 
 void thread_start(thread_t handle);
 
-#endif //OS1_VEZBE07_RISCV_CONTEXT_SWITCH_2_INTERRUPT_SYSCALL_C_HPP
+#endif //PROJEKAT_SYSCALL_C_HPP
 
 

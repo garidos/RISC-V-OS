@@ -1,16 +1,15 @@
-//
-// Created by os on 6/17/23.
-//
-
 #include "../h/TCB.hpp"
 #include "../h/riscv.hpp"
 #include "../h/syscall_c.hpp"
+
+//wrapperi i dispatch slicni kao na vjezbama
 
 TCB* TCB::schedulerHead = nullptr;
 TCB* TCB::schedulerTail = nullptr;
 TCB* TCB::sleepingHead = nullptr;
 TCB* TCB::running = nullptr;
 uint64 TCB::timeSliceCounter = 0;
+int TCB::numOfUserThreads = 0;
 
 void userMain();
 
@@ -41,6 +40,8 @@ void TCB::threadWrapper() {
     //oslobadjaju se sve niti koje su cekale na ovu
     TCB::running->emptyWaiting();
 
+    if ( TCB::running->setUser) TCB::numOfUserThreads--;
+
     thread_dispatch();
 }
 
@@ -59,6 +60,7 @@ void TCB::userMainWrapper() {
     thread_dispatch();
 }
 
+//flag = true - ne pokusava se dodavanje niti u scheduler (koristi se npr kod niti koje se uspavljuju ili blokiraju na semaforu, pri cemu se vrsi promjena konteksta, a stara nit se ne stavlaj na scheduler )
 void TCB::dispatch(bool flag) {
 
     if (TCB::schedulerHead == nullptr) return;
@@ -153,4 +155,12 @@ void TCB::idleThreadBody(void*) {
     while(true) {
         thread_dispatch();
     };
+}
+
+void* TCB::operator new(size_t size) {
+    return MemoryAllocator::malloc(size);
+}
+
+void TCB::operator delete (void* pointer) {
+    MemoryAllocator::free(pointer);
 }

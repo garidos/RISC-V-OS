@@ -1,15 +1,33 @@
-//
-// Created by os on 6/19/23.
-//
-
 #include "../h/syscall_c.hpp"
 #include "../h/riscv.hpp"
+
+void* mem_alloc (size_t size) {
+    if ( size <= 0) return nullptr;
+
+    size_t sizeInBlocks = ( size + MEM_BLOCK_SIZE - 1) / MEM_BLOCK_SIZE;
+    Riscv::load_a1((uint64)sizeInBlocks);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::mem_alloc);
+
+    Riscv::ecall();
+    return (void*)Riscv::return_a0();
+}
+
+int mem_free (void* ptr) {
+    if ( ptr == nullptr) return -2;
+
+    Riscv::load_a1((uint64)ptr);
+    Riscv::load_a0((uint64)Riscv::syscallCodes::mem_free);
+
+    Riscv::ecall();
+    return (int)Riscv::return_a0();
+}
 
 
 int thread_create ( thread_t* handle, void(*start_routine)(void*), void* arg) {
 
     if ( handle == nullptr) return -1;
 
+    //nije unutar prekdia, pa moze new da se koristi
     uint64 * stack = new uint64[DEFAULT_STACK_SIZE];
     if ( stack == nullptr ) return -2;
 
@@ -121,6 +139,7 @@ void putc (char c) {
 int thread_just_create(thread_t* handle, void(*start_routine)(void*), void* arg) {
     if ( handle == nullptr) return -1;
 
+    //nije unutar prekdia, pa moze new da se koristi
     uint64 * stack = new uint64[DEFAULT_STACK_SIZE];
     if ( stack == nullptr ) return -2;
 

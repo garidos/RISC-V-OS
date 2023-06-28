@@ -1,22 +1,9 @@
-//
-// Created by marko on 20.4.22..
-//
-
 #include "../h/riscv.hpp"
 #include "../h/TCB.hpp"
 #include "../h/SCB.hpp"
-#include "../lib/hw.h"
-#include "../lib/console.h"
 #include "../h/_console.hpp"
+#include "../h/MemoryAllocator.hpp"
 
-/*
- * u jedan asm fajl sam stavio sve trap rutine koje cuvaju kontekst i pozivaju odgovarajuci handler
- * pokusao sam da u tabeli vektora odmah stavim adrese hendlera koji bi onda prvo sacuvali kontekst pa se izvrsavali
- * ovo nije moglo(moglo je ali bi bilo dosta teze) jer bi se registri cuvali pomocu odvojenih funkcija(ono za cuvanje registra
- * u riscv asembleru ne moze u inline c asembleru iz nekog razloga) i onda bi pozivi tih funkcija poremetili stek
- * i jos neke registre koji spadaju u trenutni kontekst, pa mi je zato najbolje bilo da odmah direktno idem u trap rutine
- * gdje cu sacuvati netaknut kontekst a onda pozvati handler
- */
 
 //prekidna rutina tajmera koji izaziva softverski prekid
 void Riscv::handleSupervisorSoftwareInterrupt()
@@ -35,6 +22,7 @@ void Riscv::handleSupervisorSoftwareInterrupt()
         }
     }
 
+    //ovaj dio je ispao isti kao onaj sa vejzbi
     TCB::timeSliceCounter++;
     if (TCB::timeSliceCounter >= TCB::running->getTimeSlice()  ) {
 
@@ -94,6 +82,26 @@ void Riscv::handleExceptions()
     uint64 volatile code = TCB::running->context[TCB::registerOffs::a0Offs];
 
     switch (code) {
+        case syscallCodes::mem_alloc: {
+
+            size_t volatile sizeInBlocks = (size_t)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            void* volatile pointer = MemoryAllocator::malloc(sizeInBlocks * MEM_BLOCK_SIZE);
+
+            TCB::running->context[TCB::registerOffs::a0Offs] = (uint64)pointer;
+
+            break;
+        }
+
+        case syscallCodes::mem_free: {
+
+            void* volatile pointer = (void*)TCB::running->context[TCB::registerOffs::a1Offs];
+
+            TCB::running->context[TCB::registerOffs::a0Offs] = MemoryAllocator::free(pointer);
+
+            break;
+        }
+
         case syscallCodes::thread_create: {
 
             TCB** volatile handle = (TCB**)TCB::running->context[TCB::registerOffs::a1Offs];
@@ -104,7 +112,11 @@ void Riscv::handleExceptions()
             *handle = TCB::create(body, arg, stack);
 
             //ako je nit napravljena iz korisnickog rezima, onda i ona treba da bude u korisnickom rezimu, pa se postavlja polje setUser na osnovu koga ce se podesiti sstatus pri startovanju niti
-            if ( (sstatus & Riscv::SSTATUS_SPP) == 0) (*handle)->setUser = true;
+            //ukoliko se ovo ne uradi, kada ova nova nit dobije procesor, ona ce 'preuzeti' sstatus niti koja se izvrsavala prije nje, jer se ni na koji drugi nacin ne postavlja sstatus pri prvljenju niti
+            if ( (sstatus & Riscv::SSTATUS_SPP) == 0) {
+                (*handle)->setUser = true;
+                TCB::numOfUserThreads++;
+            }
 
             int res = 0;
             if ( *handle == nullptr) res = -3;
@@ -140,22 +152,19 @@ void Riscv::handleExceptions()
 
             TCB* volatile thread = (TCB*)TCB::running->context[TCB::registerOffs::a1Offs];
 
-            //nema logike da se ceka na neki nit ako se ona i ni jedna druga ne izvrsavaju
+            //nema logike da se ceka na neki nit ako se ona i ni jedna druga ne izvrsavaju ( nije botrebno otkad sam dodao idle )
             if (TCB::schedulerHead != nullptr) {
 
                 thread->putWaiting(TCB::running);
                 TCB::timeSliceCounter = 0;
                 TCB::dispatch(true);
                 /*
-                 * iz nekog razloga se promjene konteksta unutar prekida pravilno izvrsavaju samo ako se eksplicitno pozove dispatch koji ce to raditi
-                 * u suprotnom se poremeti s0 ( frame pointer ) i ne izvrsava se pravilno
-                 * ovo je i logicno, ali mi nije jasno zasto se pravilno izvrsava kada se poziva dispatch...
-                 * vjerovatno se pri povratku iz dispatch frame pointer vraca na osnovu sp ( koji je ispravan )
+                 * promjena kontesta mora da se uradi unutar funkcije, ne moze direktno ovde
+                 * jer se pri promjeni zamjenjuje ra (koje je prtethodno sacuvano u prekidnoj rutini) i izvrsava instrukcija ret ( koja vraca pc na tu vrijednost u ra )
+                 * kada se udje u funkciju ra ce pokazivati ovde, odmah posle funkcije - kada se izvrsi promjena vratice se ovde i pravilno izvrsiti ostatak ( upis u sepc i sstatus )
+                 * u suprotnom, u ra ce ili biti neka vrijednost koaj je ostala od poziva neke funkcije prije ove, pa ce se tu vratiti, sto nije dobro
+                 * ili ce biti ra koje odgovara pozivu samog hendlera, pri cemu ce se pri povratku potpuno rpeskociti upis u sepc i sstatus, sto ponovo nije dobro
                  */
-               /* TCB *old = TCB::running;
-                TCB::running = TCB::getScheduler();
-
-                TCB::contextSwitch(old->context, TCB::running->context);*/
             }
 
             break;
@@ -260,7 +269,11 @@ void Riscv::handleExceptions()
             *handle = TCB::justCreate(body, arg, stack);
 
             //ako je nit napravljena iz korisnickog rezima, onda i ona treba da bude u korisnickom rezimu, pa se postavlja polje setUser na osnovu koga ce se podesiti sstatus pri startovanju niti
-            if ( (sstatus & Riscv::SSTATUS_SPP) == 0) (*handle)->setUser = true;
+            //ukoliko se ovo ne uradi, kada ova nova nit dobije procesor, ona ce 'preuzeti' sstatus niti koja se izvrsavala prije nje, jer se ni na koji drugi nacin ne postavlja sstatus pri prvljenju niti
+            if ( (sstatus & Riscv::SSTATUS_SPP) == 0) {
+                (*handle)->setUser = true;
+                TCB::numOfUserThreads++;
+            }
 
             int res = 0;
             if ( *handle == nullptr) res = -3;
@@ -285,7 +298,7 @@ void Riscv::handleExceptions()
 
 }
 
-
+//sa vjezbi
 void Riscv::returnFromSMode()
 {
     __asm__ volatile("csrw sepc, ra");
@@ -329,6 +342,8 @@ void Riscv::handleIllegalException(uint64 scause) {
             break;
         }
     }
+    //ispis sam radio na ovaj nacin, jer u trenutku kada se ispisuje ova poruka znam da ce se sistem blokirati i samim tim nisu bitne stvari koje se nalaze ( pa necu preko consumer niti ici )
+    //u output baferu, vec trebam samo direktno periferiji da saljem sta zelim da ipisem
     while ( *part1 != '\0') {
         if (*((char*)CONSOLE_STATUS) & CONSOLE_TX_STATUS_BIT) {
             *((char*)CONSOLE_TX_DATA) = *part1;

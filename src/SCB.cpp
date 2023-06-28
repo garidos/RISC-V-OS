@@ -1,7 +1,3 @@
-//
-// Created by os on 6/20/23.
-//
-
 #include "../h/SCB.hpp"
 
 SCB* SCB::create(int i) {
@@ -58,4 +54,12 @@ void SCB::release() {
     blockedHead = blockedTail = nullptr;
     isActive = false;
 
+}
+
+void* SCB::operator new(size_t size) {
+    return MemoryAllocator::malloc(size);
+}
+
+void SCB::operator delete (void* pointer) {
+    MemoryAllocator::free(pointer);
 }

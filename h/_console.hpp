@@ -1,7 +1,3 @@
-//
-// Created by os on 6/22/23.
-//
-
 #ifndef PROJEKAT__CONSOLE_HPP
 #define PROJEKAT__CONSOLE_HPP
 
@@ -22,7 +18,8 @@ public:
     consoleBuffer(int cap) : capacity(cap) {
 
         head = tail = -1;
-        arr = new char[capacity];
+        arr = (char*)MemoryAllocator::malloc(capacity * sizeof(char));
+        //moze i new ovde
 
     }
 
@@ -43,9 +40,6 @@ public:
 
 class CCB {
 private:
-
-    //broj ispisa koji se trenutno obradjuju, da se sistem ne bi zavrsio prije nego sto se svi obrade
-    static int cnt;
 
     static int cap;
 

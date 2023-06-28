@@ -8,7 +8,7 @@
 .type _ZN5Riscv31trapSupervisorSoftwareInterruptEv, @function
 _ZN5Riscv31trapSupervisorSoftwareInterruptEv:
 
-    //cuvaju se a0 i ra na stacku jer ce se oni promjeniti pri pozivu getContext
+    //cuvaju se a0 i ra na steku jer ce se oni promjeniti pri pozivu getContext
     addi sp, sp, -16
     sd a0, 0 * 8(sp)
     sd ra, 1 * 8(sp)
@@ -41,7 +41,7 @@ _ZN5Riscv31trapSupervisorSoftwareInterruptEv:
 .global _ZN5Riscv31trapSupervisorExternalInterruptEv
 .type _ZN5Riscv31trapSupervisorExternalInterruptEv, @function
 _ZN5Riscv31trapSupervisorExternalInterruptEv:
-    //cuvaju se a0 i ra na stacku jer ce se oni promjeniti pri pozivu getContext
+    //cuvaju se a0 i ra na steku jer ce se oni promjeniti pri pozivu getContext
     addi sp, sp, -16
     sd a0, 0 * 8(sp)
     sd ra, 1 * 8(sp)
@@ -74,7 +74,7 @@ _ZN5Riscv31trapSupervisorExternalInterruptEv:
 .global _ZN5Riscv14trapExceptionsEv
 .type _ZN5Riscv14trapExceptionsEv, @function
 _ZN5Riscv14trapExceptionsEv:
-    //cuvaju se a0 i ra na stacku jer ce se oni promjeniti pri pozivu getContext
+    //cuvaju se a0 i ra na steku jer ce se oni promjeniti pri pozivu getContext
     addi sp, sp, -16
     sd a0, 0 * 8(sp)
     sd ra, 1 * 8(sp)

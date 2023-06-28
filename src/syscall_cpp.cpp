@@ -1,7 +1,20 @@
-//
-// Created by os on 6/23/23.
-//
 #include "../h/syscall_cpp.hpp"
+
+void* operator new(size_t size) {
+    return mem_alloc(size);
+}
+
+void* operator new[](size_t size) {
+    return mem_alloc(size);
+}
+
+void operator delete(void* pointer) noexcept {
+    mem_free(pointer);
+}
+
+void operator delete[](void*pointer) noexcept {
+    mem_free(pointer);
+}
 
 Thread::Thread(void (*body)(void*), void* arg){
     this->body = body;
@@ -72,6 +85,10 @@ void Console::putc(char c) {
  */
 void PeriodicThread::terminate() {
     period++;
+    //this->join();
+    //moze npr da se desi, da se tik pred kraj userMaina pozove terminate, nit ostaje i dalje uspavana, a sistem izlazi iz userMaina i zavrsava svoj rad, zatim se uspavana nit budi i pokusava da uradi nesto sto izaziva nelegalan izuzetak
+    //pa da se ovo ne bi desilo ceka se da se nit probudi i skroz zavrsi
+    //jako su male sanse da se ovo desi, ali eto
 };
 
 void PeriodicThread::periodicThreadWrapper(void *arg) {

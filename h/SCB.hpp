@@ -1,7 +1,3 @@
-//
-// Created by os on 6/20/23.
-//
-
 #ifndef PROJEKAT_SCB_HPP
 #define PROJEKAT_SCB_HPP
 
@@ -19,6 +15,10 @@ public:
     int active() const { return isActive;};
 
     static SCB* create(int i = 1);
+
+    void* operator new(size_t size);
+
+    void operator delete (void* pointer);
 
 protected:
 
