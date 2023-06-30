@@ -8,9 +8,10 @@
 .global _ZN5Riscv11vectorTableEv
 .type _ZN5Riscv11vectorTableEv, @function
 _ZN5Riscv11vectorTableEv:
-    .org _ZN5Riscv11vectorTableEv + 0*4
-    jal zero, _ZN5Riscv14trapExceptionsEv
-    .org _ZN5Riscv11vectorTableEv + 1*4
-    jal zero, _ZN5Riscv31trapSupervisorSoftwareInterruptEv
+    j _ZN5Riscv14trapExceptionsEv                       // nulti ulaz
+    j _ZN5Riscv31trapSupervisorSoftwareInterruptEv      // prvi ulaz
     .org _ZN5Riscv11vectorTableEv + 9*4
-    jal zero, _ZN5Riscv31trapSupervisorExternalInterruptEv
+    j _ZN5Riscv31trapSupervisorExternalInterruptEv      // deveti ulaz
+
+    //za izuzetke se uzima BASE ( nulti ulaz, odnosno adresa koja se nalazi u stvec - adresa ove tabele ), a za prekide se uzima BASE + 4 * kod prekida
+    //adresa mora biti poravnata na 4, jer se prva dva bita koriste za mod - 0 = direktno ( svi prekidi idu na BASE ), 1 - vektorski ( ovo iznad )

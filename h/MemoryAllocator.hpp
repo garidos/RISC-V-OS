@@ -8,13 +8,14 @@ class MemoryAllocator {
 private:
     MemoryAllocator() {};
 
-
+    //heder alociranog segmenta koji sadrzi njegovu velicinu ( bez hedera )
     struct BlockHeader {
         size_t size;
     };
 
 public:
 
+    //heder slobodnog segmenta koji sadrzi velicinu citavog segmenta i pokazivac na naredni u nizu
     struct FreeSegment {
         size_t size;
         FreeSegment* next;
@@ -28,7 +29,6 @@ public:
 private:
 
     static FreeSegment* freeMemHead;
-
 
 };
 
