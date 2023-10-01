@@ -139,3 +139,4 @@ qemu-gdb: ${KERNEL_IMG} .gdbinit
 .PRECIOUS: %.o
 
 -include $(wildcard ${DIR_BUILD}/*.d)
+
