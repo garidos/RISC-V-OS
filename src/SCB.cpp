@@ -25,6 +25,7 @@ void SCB::block() {
         blockedTail = blockedTail->next;
     }
 
+    TCB::timeSliceCounter = 0;
     TCB::dispatch(true);
 
 }

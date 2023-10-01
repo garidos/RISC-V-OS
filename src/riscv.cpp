@@ -229,6 +229,7 @@ void Riscv::handleExceptions()
             TCB::running->timeLeft = time;
             TCB::putSleeping(TCB::running);
 
+            TCB::timeSliceCounter = 0;
             TCB::dispatch(true);
 
             TCB::running->context[TCB::registerOffs::a0Offs] = 0;
